@@ -1,0 +1,721 @@
+# Step 10: GitHub Repository Organization and Setup
+
+## 🎯 Overview
+
+This guide shows you how to organize all your CI/CD pipeline files in GitHub so they can be easily accessed via `wget` in your Jenkins pipeline and EC2 setup.
+
+---
+
+## 📁 Recommended GitHub Repository Structure
+
+### Option 1: Single Repository (Recommended for Learning)
+
+```
+jenkins-python-pipeline/
+├── README.md
+├── docs/
+│   ├── 01-ec2-setup.md
+│   ├── 04-jenkins-plugins.md
+│   ├── 07-quality-gates.md
+│   ├── 08-testing-errors.md
+│   └── 09-setup-guide.md
+├── scripts/
+│   ├── 02-jenkins-installation.sh
+│   └── 03-sonarqube-docker-setup.sh
+├── sample-app/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   └── utils.py
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_main.py
+│   ├── terraform/
+│   │   └── main.tf
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── Jenkinsfile
+│   ├── .coveragerc
+│   ├── .gitignore
+│   ├── sonar-project.properties
+│   └── README.md
+└── .github/
+    └── workflows/
+        └── validate.yml (optional)
+```
+
+### Option 2: Separate Repositories (Production Approach)
+
+```
+Repository 1: jenkins-cicd-setup
+- Setup scripts
+- Documentation
+- Configuration guides
+
+Repository 2: sample-python-app
+- Application code
+- Jenkinsfile
+- Tests
+- Dockerfile
+```
+
+---
+
+## 🚀 Complete Setup Instructions
+
+### Step 1: Create Main Repository on GitHub
+
+```bash
+# On your local machine
+mkdir jenkins-python-pipeline
+cd jenkins-python-pipeline
+
+# Initialize git
+git init
+```
+
+### Step 2: Create Directory Structure
+
+```bash
+# Create directories
+mkdir -p docs scripts sample-app/app sample-app/tests sample-app/terraform .github/workflows
+
+# Create README
+cat > README.md << 'EOF'
+# Jenkins CI/CD Pipeline for Python Flask
+
+Complete production-grade CI/CD pipeline with security scanning, quality gates, and automated deployment.
+
+## 🎯 Features
+
+- ✅ Python Flask application
+- 🔒 Complete security scanning (SAST, SCA, DAST, IaC, Container)
+- 📊 SonarQube quality gates
+- 🐳 Docker containerization
+- 🚀 Automated deployment
+- 📧 Notifications
+
+## 📚 Documentation
+
+1. [EC2 Setup Guide](docs/01-ec2-setup.md)
+2. [Jenkins Installation Script](scripts/02-jenkins-installation.sh)
+3. [SonarQube Setup Script](scripts/03-sonarqube-docker-setup.sh)
+4. [Jenkins Plugins Configuration](docs/04-jenkins-plugins.md)
+5. [Quality Gates Setup](docs/07-quality-gates.md)
+6. [Testing Errors Guide](docs/08-testing-errors.md)
+7. [Complete Setup Guide](docs/09-setup-guide.md)
+
+## 🚀 Quick Start
+
+### 1. Setup Infrastructure
+```bash
+# Launch EC2 instances (see docs/01-ec2-setup.md)
+
+# Install Jenkins
+ssh -i jenkins-key.pem ubuntu@JENKINS_IP
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+chmod +x 02-jenkins-installation.sh
+sudo ./02-jenkins-installation.sh
+
+# Install SonarQube
+ssh -i jenkins-key.pem ubuntu@SONARQUBE_IP
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/03-sonarqube-docker-setup.sh
+chmod +x 03-sonarqube-docker-setup.sh
+sudo ./03-sonarqube-docker-setup.sh
+```
+
+### 2. Deploy Sample Application
+```bash
+# Option A: Use as template
+# Fork this repo and modify sample-app/ directory
+
+# Option B: Create separate repo
+# Copy sample-app/ to new repository
+# Follow setup guide in docs/09-setup-guide.md
+```
+
+## 📦 Sample Application
+
+The `sample-app/` directory contains a complete Flask REST API with:
+- Intentional vulnerabilities for testing
+- Comprehensive test suite
+- Docker configuration
+- Infrastructure as Code (Terraform)
+- Complete Jenkinsfile with 20 stages
+
+## 🎓 Learning Path
+
+Week 1: Setup and basic pipeline  
+Week 2: Security scanning and quality gates  
+Week 3: Optimization and best practices  
+Week 4: Advanced topics and production deployment  
+
+## 📝 License
+
+MIT License - Feel free to use for learning and production!
+
+## 🤝 Contributing
+
+Contributions welcome! Please feel free to submit a Pull Request.
+EOF
+```
+
+### Step 3: Add Documentation Files
+
+```bash
+# Copy all documentation to docs/
+# These are the markdown files from previous steps
+
+# Create docs/01-ec2-setup.md
+# (Copy content from "01 - EC2 Setup Guide" artifact)
+
+# Create docs/04-jenkins-plugins.md
+# (Copy content from "04 - Jenkins Plugins Configuration" artifact)
+
+# Create docs/07-quality-gates.md
+# (Copy content from "07 - SonarQube Quality Gate Setup" artifact)
+
+# Create docs/08-testing-errors.md
+# (Copy content from "08 - Testing Errors (Python Version)" artifact)
+
+# Create docs/09-setup-guide.md
+# (Copy content from "09 - Complete Setup Guide (Python Edition)" artifact)
+```
+
+### Step 4: Add Installation Scripts
+
+```bash
+# Create scripts/02-jenkins-installation.sh
+# (Copy content from "02 - Jenkins Installation Script" artifact)
+
+# Create scripts/03-sonarqube-docker-setup.sh
+# (Copy content from "03 - SonarQube Docker Setup Script" artifact)
+
+# Make scripts executable
+chmod +x scripts/*.sh
+```
+
+### Step 5: Add Sample Application
+
+```bash
+# Create all sample app files in sample-app/ directory
+# (Copy all files from "05 - Python Flask Sample Application" artifact)
+
+# sample-app/app/__init__.py
+# sample-app/app/main.py
+# sample-app/app/utils.py
+# sample-app/tests/__init__.py
+# sample-app/tests/test_main.py
+# sample-app/requirements.txt
+# sample-app/Dockerfile
+# sample-app/docker-compose.yml
+# sample-app/Jenkinsfile
+# sample-app/.coveragerc
+# sample-app/sonar-project.properties
+# sample-app/terraform/main.tf
+# sample-app/README.md
+```
+
+### Step 6: Create .gitignore
+
+```bash
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.xml
+.tox/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Reports
+*-report.*
+bandit-report.*
+safety-report.*
+trivy-report.*
+pylint-report.*
+zap-report.*
+results_json.json
+
+# Jenkins
+.jenkins/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Security - Never commit these!
+*.pem
+*.key
+*.env
+.env.local
+credentials.json
+secrets.yaml
+EOF
+```
+
+### Step 7: Create GitHub Actions Validation (Optional)
+
+```bash
+cat > .github/workflows/validate.yml << 'EOF'
+name: Validate Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate Shell Scripts
+        run: |
+          for script in scripts/*.sh; do
+            bash -n "$script"
+            echo "✓ $script is valid"
+          done
+      
+      - name: Check Python Syntax
+        run: |
+          python3 -m py_compile sample-app/app/*.py
+          python3 -m py_compile sample-app/tests/*.py
+          echo "✓ Python syntax is valid"
+
+  validate-python-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        working-directory: ./sample-app
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run tests
+        working-directory: ./sample-app
+        run: |
+          pytest tests/ -v
+      
+      - name: Security check
+        working-directory: ./sample-app
+        run: |
+          pip install bandit safety
+          bandit -r app/ || true
+          safety check || true
+EOF
+```
+
+### Step 8: Commit and Push to GitHub
+
+```bash
+# Stage all files
+git add .
+
+# Commit
+git commit -m "Initial commit: Complete Jenkins CI/CD pipeline for Python Flask"
+
+# Create repository on GitHub
+# Go to github.com → New repository
+# Name: jenkins-python-pipeline
+# Description: Production-grade CI/CD pipeline with security scanning
+# Public or Private: Your choice
+# Do NOT initialize with README (we already have one)
+# Click "Create repository"
+
+# Add remote and push
+git remote add origin https://github.com/YOUR_USERNAME/jenkins-python-pipeline.git
+git branch -M main
+git push -u origin main
+```
+
+---
+
+## 🔗 Using wget in Pipeline
+
+### In Jenkins Installation (EC2 Setup)
+
+```bash
+# On Jenkins EC2 instance
+ssh -i jenkins-key.pem ubuntu@JENKINS_IP
+
+# Download and run Jenkins installation script
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+chmod +x 02-jenkins-installation.sh
+sudo ./02-jenkins-installation.sh
+```
+
+### In SonarQube Installation
+
+```bash
+# On SonarQube EC2 instance
+ssh -i jenkins-key.pem ubuntu@SONARQUBE_IP
+
+# Download and run SonarQube setup script
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/03-sonarqube-docker-setup.sh
+chmod +x 03-sonarqube-docker-setup.sh
+sudo ./03-sonarqube-docker-setup.sh
+```
+
+### Raw GitHub URLs
+
+The format for raw GitHub file URLs is:
+```
+https://raw.githubusercontent.com/USERNAME/REPOSITORY/BRANCH/PATH/TO/FILE
+
+Examples:
+https://raw.githubusercontent.com/yourusername/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+https://raw.githubusercontent.com/yourusername/jenkins-python-pipeline/main/docs/01-ec2-setup.md
+```
+
+---
+
+## 📋 Alternative: Separate Application Repository
+
+If you want to keep application code separate from setup scripts:
+
+### Create Application Repository
+
+```bash
+# Create new directory
+mkdir sample-python-app
+cd sample-python-app
+
+# Copy only application files
+cp -r ../jenkins-python-pipeline/sample-app/* .
+
+# Initialize git
+git init
+git add .
+git commit -m "Initial commit: Python Flask application"
+
+# Create repo on GitHub: sample-python-app
+git remote add origin https://github.com/YOUR_USERNAME/sample-python-app.git
+git branch -M main
+git push -u origin main
+```
+
+### Update Jenkins Pipeline Configuration
+
+```groovy
+// In Jenkinsfile, reference setup scripts from setup repo
+stage('Download Scripts') {
+    steps {
+        sh '''
+            wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/helper-script.sh
+            chmod +x helper-script.sh
+        '''
+    }
+}
+```
+
+---
+
+## 🔐 Security Best Practices
+
+### Never Commit These Files
+
+```bash
+# Add to .gitignore
+*.pem                    # SSH keys
+*.key                    # Private keys
+*.env                    # Environment variables
+.env.local
+credentials.json         # Credentials
+secrets.yaml             # Secrets
+config/production.py     # Production config with secrets
+```
+
+### Use GitHub Secrets for CI/CD
+
+```yaml
+# In .github/workflows/deploy.yml
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+```
+
+### Protect Sensitive Branches
+
+```
+GitHub Settings → Branches → Branch protection rules
+- Require pull request reviews
+- Require status checks to pass
+- Include administrators
+```
+
+---
+
+## 📝 Documentation Updates
+
+### Keep URLs Updated in Documentation
+
+After pushing to GitHub, update all documentation files with your actual GitHub URLs:
+
+1. **In README.md**:
+```markdown
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+```
+
+2. **In docs/09-setup-guide.md**:
+```bash
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+```
+
+3. **Create a URLS.md file**:
+```markdown
+# Quick Reference URLs
+
+## Scripts
+- Jenkins Installation: https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+- SonarQube Setup: https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/03-sonarqube-docker-setup.sh
+
+## Documentation
+- Setup Guide: https://github.com/YOUR_USERNAME/jenkins-python-pipeline/blob/main/docs/09-setup-guide.md
+- EC2 Setup: https://github.com/YOUR_USERNAME/jenkins-python-pipeline/blob/main/docs/01-ec2-setup.md
+```
+
+---
+
+## 🎯 Complete Workflow Example
+
+### Scenario: New Team Member Setup
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/jenkins-python-pipeline.git
+cd jenkins-python-pipeline
+
+# 2. Read documentation
+cat docs/09-setup-guide.md
+
+# 3. Launch EC2 instances (manually via AWS Console)
+
+# 4. Install Jenkins
+ssh -i your-key.pem ubuntu@JENKINS_IP
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+chmod +x 02-jenkins-installation.sh
+sudo ./02-jenkins-installation.sh
+
+# 5. Install SonarQube
+ssh -i your-key.pem ubuntu@SONARQUBE_IP
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/03-sonarqube-docker-setup.sh
+chmod +x 03-sonarqube-docker-setup.sh
+sudo ./03-sonarqube-docker-setup.sh
+
+# 6. Create application repository (or fork sample-app)
+cd ..
+cp -r jenkins-python-pipeline/sample-app my-flask-app
+cd my-flask-app
+git init
+# ... configure and push
+
+# 7. Configure Jenkins pipeline pointing to my-flask-app
+# Done!
+```
+
+---
+
+## 🔄 Keeping Your Repository Updated
+
+### Update Scripts
+
+```bash
+# When you improve scripts
+cd jenkins-python-pipeline
+nano scripts/02-jenkins-installation.sh
+# Make changes
+
+git add scripts/02-jenkins-installation.sh
+git commit -m "Update Jenkins installation script: Add Python 3.11 support"
+git push
+
+# Users can now get the latest version
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/main/scripts/02-jenkins-installation.sh
+```
+
+### Version Tagging
+
+```bash
+# Tag releases for stability
+git tag -a v1.0.0 -m "Release 1.0.0: Initial stable version"
+git push origin v1.0.0
+
+# Users can download specific versions
+wget https://raw.githubusercontent.com/YOUR_USERNAME/jenkins-python-pipeline/v1.0.0/scripts/02-jenkins-installation.sh
+```
+
+---
+
+## 📦 Repository Templates
+
+### GitHub Template Repository
+
+Make your repository a template so others can easily create their own:
+
+```
+GitHub → Repository Settings → Template repository
+Check: "Template repository"
+```
+
+Users can then click "Use this template" to create their own copy.
+
+---
+
+## 🧪 Testing Your Setup
+
+### Validate All Links
+
+```bash
+# Create a test script
+cat > test-links.sh << 'EOF'
+#!/bin/bash
+
+GITHUB_USER="YOUR_USERNAME"
+REPO="jenkins-python-pipeline"
+BASE_URL="https://raw.githubusercontent.com/${GITHUB_USER}/${REPO}/main"
+
+echo "Testing GitHub raw links..."
+
+# Test scripts
+for script in scripts/*.sh; do
+    filename=$(basename $script)
+    url="${BASE_URL}/scripts/${filename}"
+    echo -n "Testing $url ... "
+    if wget --spider $url 2>/dev/null; then
+        echo "✓ OK"
+    else
+        echo "✗ FAILED"
+    fi
+done
+
+# Test sample app files
+echo -n "Testing ${BASE_URL}/sample-app/requirements.txt ... "
+if wget --spider "${BASE_URL}/sample-app/requirements.txt" 2>/dev/null; then
+    echo "✓ OK"
+else
+    echo "✗ FAILED"
+fi
+
+echo "Done!"
+EOF
+
+chmod +x test-links.sh
+./test-links.sh
+```
+
+---
+
+## 📚 Additional Resources
+
+### Sample Repository Structure Examples
+
+```
+Minimal (Learning):
+jenkins-python-pipeline/
+├── README.md
+├── scripts/
+└── sample-app/
+
+Standard (Recommended):
+jenkins-python-pipeline/
+├── README.md
+├── docs/
+├── scripts/
+├── sample-app/
+└── .github/
+
+Advanced (Production):
+jenkins-python-pipeline/
+├── README.md
+├── docs/
+├── scripts/
+├── sample-app/
+├── k8s/
+├── helm/
+├── terraform/
+├── .github/
+└── tests/
+```
+
+---
+
+## ✅ Verification Checklist
+
+After setting up your GitHub repository:
+
+- [ ] Repository created on GitHub
+- [ ] All files committed and pushed
+- [ ] README.md displays correctly
+- [ ] Raw URLs work (test with wget)
+- [ ] .gitignore excludes sensitive files
+- [ ] Scripts are executable (chmod +x)
+- [ ] Documentation links are correct
+- [ ] Sample application is complete
+- [ ] Repository is public (or team has access if private)
+- [ ] Branch protection enabled (optional)
+- [ ] GitHub Actions validate successfully (optional)
+
+---
+
+## 🎉 You're Done!
+
+Your GitHub repository is now set up and ready to be used with wget in your Jenkins pipeline!
+
+### Next Steps:
+1. Share your repository URL with team members
+2. Follow the setup guide (docs/09-setup-guide.md)
+3. Run your first pipeline
+4. Customize for your projects
+5. Contribute improvements back!
+
+---
+
+## 📞 Need Help?
+
+Common issues:
+- **404 errors**: Check URL format and file path
+- **Permission denied**: Ensure scripts have execute permission
+- **Rate limits**: GitHub has API rate limits for unauthenticated requests
+
+Solutions:
+- Use HTTPS URLs for public repos
+- Use Personal Access Tokens for private repos
+- Cache downloaded scripts locally when possible
+
+Happy building! 🚀

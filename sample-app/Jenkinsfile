@@ -1,0 +1,594 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Project configuration
+        PROJECT_NAME = 'sample-python-app'
+        
+        // Docker configuration
+        DOCKER_IMAGE = "dheepala1/${PROJECT_NAME}"
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        
+        // SonarQube configuration
+        SONARQUBE_ENV = 'SonarQube'
+        SONAR_TOKEN = credentials('sonarqube-token')
+        
+        // Python configuration
+        PYTHON_VERSION = '3.9'
+        VENV_DIR = "${WORKSPACE}/venv"
+        
+        // Email notification
+        //EMAIL_RECIPIENTS = 'your-email@example.com'
+    }
+    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+        timestamps()
+    }
+    
+    stages {
+        stage('1. Initialization') {
+            steps {
+                script {
+                    echo "=========================================="
+                    echo "Pipeline Started for ${PROJECT_NAME}"
+                    echo "Build Number: ${BUILD_NUMBER}"
+                    echo "Branch: ${env.BRANCH_NAME ?: 'main'}"
+                    echo "=========================================="
+                    cleanWs()
+                }
+            }
+        }
+        
+        stage('2. Checkout Code') {
+            steps {
+                script {
+                    echo "Checking out code from GitHub..."
+                    checkout scm
+                    
+                    sh '''
+                        echo "Latest Commit:"
+                        git log -1 --pretty=format:"%h - %an: %s" || echo "Git info not available"
+                    '''
+                }
+            }
+        }
+        
+        stage('3. Verify Trigger') {
+            steps {
+                script {
+                    echo "=========================================="
+                    echo "Build Trigger Verification"
+                    echo "=========================================="
+                    echo "Triggered by: ${currentBuild.getBuildCauses()[0].shortDescription}"
+                    
+                    def changes = currentBuild.changeSets
+                    if (changes.size() == 0) {
+                        echo "No new changes detected"
+                    } else {
+                        echo "Changes detected:"
+                        changes.each { changeSet ->
+                            changeSet.items.each { change ->
+                                echo "  - ${change.msg} by ${change.author}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('4. Environment Check') {
+            steps {
+                script {
+                    echo "=========================================="
+                    echo "Environment Information"
+                    echo "=========================================="
+                    sh '''
+                        echo "Python Version:"
+                        python3 --version
+                        
+                        echo "\nPip Version:"
+                        pip3 --version
+                        
+                        echo "\nDocker Version:"
+                        docker --version
+                        
+                        echo "\nTrivy Version:"
+                        trivy --version
+                        
+                        echo "\nCheckov Version:"
+                        checkov --version
+                    '''
+                }
+            }
+        }
+        
+        stage('5. Setup Virtual Environment') {
+            steps {
+                script {
+                    echo "Creating Python virtual environment..."
+                    sh '''
+                        python3 -m venv ${VENV_DIR}
+                        . ${VENV_DIR}/bin/activate
+                        pip install --upgrade pip
+                        echo "✓ Virtual environment created"
+                    '''
+                }
+            }
+        }
+        
+        stage('6. Install Dependencies') {
+            steps {
+                script {
+                    echo "Installing Python dependencies..."
+                    sh '''
+                        . ${VENV_DIR}/bin/activate
+                        pip install -r requirements.txt
+                        pip list > installed-packages.txt
+                        echo "✓ Dependencies installed"
+                    '''
+                    archiveArtifacts artifacts: 'installed-packages.txt', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        stage('7. Dry Run / Syntax Check') {
+            steps {
+                script {
+                    echo "Checking Python syntax..."
+                    try {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            python3 -m py_compile app/*.py
+                            echo "✓ Syntax check passed"
+                        '''
+                    } catch (Exception e) {
+                        error("✗ Syntax check failed: ${e.message}")
+                    }
+                }
+            }
+        }
+        
+        stage('8. Code Linting (Pylint)') {
+            steps {
+                script {
+                    echo "Running Pylint code analysis..."
+                    try {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            pylint app/ --output-format=json > pylint-report.json || true
+                            pylint app/ --output-format=text || true
+                        '''
+                        archiveArtifacts artifacts: 'pylint-report.json', allowEmptyArchive: true
+                        echo "✓ Linting completed"
+                    } catch (Exception e) {
+                        echo "⚠ Linting found issues"
+                        unstable("Pylint found code quality issues")
+                    }
+                }
+            }
+        }
+        
+        stage('9. Unit Tests with Coverage') {
+            steps {
+                script {
+                    echo "Running unit tests with coverage..."
+                    try {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            pytest tests/ -v \
+                                --cov=app \
+                                --cov-report=xml:coverage.xml \
+                                --cov-report=html:htmlcov \
+                                --cov-report=term \
+                                --junitxml=test-results.xml
+                        '''
+                        
+                        // Publish test results
+                        junit testResults: 'test-results.xml', allowEmptyResults: false
+                        
+                        // Archive coverage reports
+                        archiveArtifacts artifacts: 'coverage.xml,htmlcov/**/*', allowEmptyArchive: true
+                        
+                        publishHTML(target: [
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'htmlcov',
+                            reportFiles: 'index.html',
+                            reportName: 'Coverage Report'
+                        ])
+                        
+                        echo "✓ Unit tests passed"
+                    } catch (Exception e) {
+                        error("✗ Unit tests failed: ${e.message}")
+                    }
+                }
+            }
+        }
+        
+        stage('10. SCA - Dependency Vulnerability Check') {
+            steps {
+                script {
+                    echo "Running Safety check for vulnerable dependencies..."
+                    try {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            pip install safety
+                            safety check --json --output safety-report.json || true
+                            safety check --output safety-report.txt || true
+                            cat safety-report.txt
+                        '''
+                        
+                        archiveArtifacts artifacts: 'safety-report.*', allowEmptyArchive: true
+                        echo "⚠ SCA scan completed - Check report for vulnerabilities"
+                    } catch (Exception e) {
+                        echo "⚠ SCA scan found vulnerabilities"
+                        unstable("Vulnerable dependencies detected")
+                    }
+                }
+            }
+        }
+        
+        stage('11. SAST - Bandit Security Scan') {
+            steps {
+                script {
+                    echo "Running Bandit security analysis..."
+                    try {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            bandit -r app/ \
+                                -f json -o bandit-report.json || true
+                            bandit -r app/ \
+                                -f txt -o bandit-report.txt || true
+                            cat bandit-report.txt
+                        '''
+                        
+                        archiveArtifacts artifacts: 'bandit-report.*', allowEmptyArchive: true
+                        echo "✓ Bandit security scan completed"
+                    } catch (Exception e) {
+                        echo "⚠ Security issues detected by Bandit"
+                        unstable("Security vulnerabilities found")
+                    }
+                }
+            }
+        }
+        
+        stage('12. SAST - SonarQube Analysis') {
+            steps {
+                script {
+                    echo "Running SonarQube static analysis..."
+                    withSonarQubeEnv("${SONARQUBE_ENV}") {
+                        sh '''
+                            . ${VENV_DIR}/bin/activate
+                            
+                            # Install sonar-scanner if not available
+                            if ! command -v sonar-scanner &> /dev/null; then
+                                wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+                                unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+                                export PATH=$PATH:${WORKSPACE}/sonar-scanner-5.0.1.3006-linux/bin
+                            fi
+                            
+                            sonar-scanner \
+                                -Dsonar.projectKey=${PROJECT_NAME} \
+                                -Dsonar.projectName="${PROJECT_NAME}" \
+                                -Dsonar.sources=app \
+                                -Dsonar.tests=tests \
+                                -Dsonar.python.coverage.reportPaths=coverage.xml \
+                                -Dsonar.python.xunit.reportPath=test-results.xml \
+                                -Dsonar.python.version=3.9
+                        '''
+                    }
+                    echo "✓ SAST analysis sent to SonarQube"
+                }
+            }
+        }
+        
+        stage('13. Quality Gate Check') {
+            steps {
+                script {
+                    echo "Waiting for SonarQube Quality Gate result..."
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        
+                        echo "=========================================="
+                        echo "Quality Gate Status: ${qg.status}"
+                        echo "=========================================="
+                        
+                        if (qg.status != 'OK') {
+                            echo "Quality Gate Details:"
+                            qg.conditions.each { condition ->
+                                echo "  ${condition.metricKey}: ${condition.actualValue} (${condition.status})"
+                            }
+                            error("Quality Gate failed: ${qg.status}")
+                        } else {
+                            echo "✓ Quality Gate passed successfully"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('14. IaC Security Scan') {
+            when {
+                expression { fileExists('terraform') }
+            }
+            steps {
+                script {
+                    echo "Running Checkov IaC security scan..."
+                    try {
+                        sh '''
+                            checkov -d terraform \
+                                --output cli \
+                                --output json \
+                                --output-file-path . \
+                                --framework terraform \
+                                --compact \
+                                --quiet || true
+                        '''
+                        
+                        archiveArtifacts artifacts: 'results_json.json', allowEmptyArchive: true
+                        echo "⚠ IaC scan completed - Review results"
+                    } catch (Exception e) {
+                        echo "⚠ IaC scan found security issues"
+                        unstable("IaC security issues detected")
+                    }
+                }
+            }
+        }
+        
+        stage('15. Docker Image Build') {
+            steps {
+                script {
+                    echo "Building Docker image..."
+                    dockerImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.build("${DOCKER_IMAGE}:latest")
+                    echo "✓ Docker image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+        
+        stage('16. Container Security Scan') {
+            steps {
+                script {
+                    echo "Running Trivy container vulnerability scan..."
+                    try {
+                        sh """
+                            trivy image \
+                                --severity HIGH,CRITICAL \
+                                --format table \
+                                --output trivy-report.txt \
+                                ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            
+                            trivy image \
+                                --severity HIGH,CRITICAL \
+                                --format json \
+                                --output trivy-report.json \
+                                ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            
+                            cat trivy-report.txt
+                        """
+                        
+                        archiveArtifacts artifacts: 'trivy-report.*', allowEmptyArchive: true
+                        echo "✓ Container scan completed"
+                    } catch (Exception e) {
+                        echo "⚠ Container vulnerabilities detected"
+                        unstable("Container security issues found")
+                    }
+                }
+            }
+        }
+        
+        stage('17. Push Docker Image') {
+            steps {
+                script {
+                    echo "Pushing Docker image to registry..."
+                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                        dockerImage.push("${DOCKER_TAG}")
+                        dockerImage.push("latest")
+                    }
+                    echo "✓ Docker image pushed: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
+            }
+        }
+        
+        stage('18. Deploy Application') {
+            steps {
+                script {
+                    echo "Deploying application..."
+                    try {
+                        sh '''
+                            docker stop ${PROJECT_NAME} || true
+                            docker rm ${PROJECT_NAME} || true
+                        '''
+                        
+                        sh """
+                            docker run -d \
+                                --name ${PROJECT_NAME} \
+                                -p 8080:8080 \
+                                --restart unless-stopped \
+                                ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        """
+                        
+                        sleep(time: 20, unit: 'SECONDS')
+                        
+                        sh '''
+                            for i in {1..10}; do
+                                if curl -f http://localhost:8080/health; then
+                                    echo "Application is healthy"
+                                    exit 0
+                                fi
+                                echo "Waiting for application to be ready... ($i/10)"
+                                sleep 5
+                            done
+                            echo "Application failed to start"
+                            exit 1
+                        '''
+                        
+                        echo "✓ Application deployed successfully"
+                    } catch (Exception e) {
+                        error("✗ Deployment failed: ${e.message}")
+                    }
+                }
+            }
+        }
+        
+        stage('19. DAST - Dynamic Application Security Test') {
+            steps {
+                script {
+                    echo "Running OWASP ZAP DAST scan..."
+                    try {
+                        sh '''
+                            docker run --rm \
+                                --network host \
+                                -v $(pwd):/zap/wrk:rw \
+                                -t ghcr.io/zaproxy/zaproxy:stable \
+                                zap-baseline.py \
+                                -t http://localhost:8080 \
+                                -r zap-report.html \
+                                -J zap-report.json \
+                                -w zap-report.md \
+                                || true
+                        '''
+                        
+                        archiveArtifacts artifacts: 'zap-report.*', allowEmptyArchive: true
+                        
+                        publishHTML(target: [
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: '.',
+                            reportFiles: 'zap-report.html',
+                            reportName: 'OWASP ZAP DAST Report'
+                        ])
+                        
+                        echo "✓ DAST scan completed"
+                    } catch (Exception e) {
+                        echo "⚠ DAST scan found security issues"
+                        unstable("DAST issues detected")
+                    }
+                }
+            }
+        }
+        
+        stage('20. Smoke Tests') {
+            steps {
+                script {
+                    echo "Running smoke tests..."
+                    sh '''
+                        echo "Testing endpoints..."
+                        
+                        echo "Test 1: Home endpoint"
+                        curl -f http://localhost:8080/ || exit 1
+                        
+                        echo "Test 2: Health endpoint"
+                        curl -f http://localhost:8080/health || exit 1
+                        
+                        echo "Test 3: Data endpoint"
+                        curl -f http://localhost:8080/api/data || exit 1
+                        
+                        echo "✓ All endpoints responding correctly"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                echo "=========================================="
+                echo "Pipeline Execution Complete"
+                echo "Status: ${currentBuild.result}"
+                echo "Duration: ${currentBuild.durationString}"
+                echo "=========================================="
+                
+                // Cleanup
+                sh '''
+                    rm -rf ${VENV_DIR}
+                '''
+                cleanWs()
+            }
+        }
+        
+        success {
+            script {
+                echo "✓ Pipeline completed successfully!"
+                
+                echo "
+                    subject: "✓ SUCCESS: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
+                    body: 
+                        <h2>Build Successful</h2>
+                        <p><strong>Project:</strong> ${PROJECT_NAME}</p>
+                        <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
+                        <p><strong>Status:</strong> SUCCESS</p>
+                        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                        <p><strong>Docker Image:</strong> ${DOCKER_IMAGE}:${DOCKER_TAG}</p>
+                        <h3>Reports Available:</h3>
+                        <ul>
+                            <li>Code Coverage Report</li>
+                            <li>Security Scan (Bandit)</li>
+                            <li>Dependency Check (Safety)</li>
+                            <li>Container Scan (Trivy)</li>
+                            <li>DAST Report (OWASP ZAP)</li>
+                        </ul>
+                        <p><a href="${BUILD_URL}">View Build Details</a></p>
+                    "
+                    //to: "${EMAIL_RECIPIENTS}",
+                    //mimeType: 'text/html'
+                )
+            }
+        }
+        
+        failure {
+            script {
+                echo "✗ Pipeline failed!"
+                
+                echo "
+                    subject: "✗ FAILURE: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
+                    body: 
+                        <h2>Build Failed</h2>
+                        <p><strong>Project:</strong> ${PROJECT_NAME}</p>
+                        <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
+                        <p><strong>Status:</strong> FAILURE</p>
+                        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                        <p><strong>Failed Stage:</strong> Check console output for details</p>
+                        <p><a href="${BUILD_URL}console">View Console Output</a></p>
+                    "
+                    //to: "${EMAIL_RECIPIENTS}",
+                    //mimeType: 'text/html'
+                )
+            }
+        }
+        
+        unstable {
+            script {
+                echo "⚠ Pipeline completed with warnings"
+                
+                echo 
+                    subject: "⚠ UNSTABLE: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
+                    body: """
+                        <h2>Build Unstable</h2>
+                        <p><strong>Project:</strong> ${PROJECT_NAME}</p>
+                        <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
+                        <p><strong>Status:</strong> UNSTABLE</p>
+                        <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                        <p>Security scans or quality checks found issues. Review the reports:</p>
+                        <ul>
+                            <li>Safety Report (Dependencies)</li>
+                            <li>Bandit Report (Security)</li>
+                            <li>Trivy Report (Container)</li>
+                            <li>DAST Report (Runtime)</li>
+                        </ul>
+                        <p><a href="${BUILD_URL}">View Build Details</a></p>
+                    "
+                    //to: "${EMAIL_RECIPIENTS}",
+                    //mimeType: 'text/html'
+                )
+            }
+        }
+    }
+}

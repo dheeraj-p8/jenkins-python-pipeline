@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.xml
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Reports
+*-report.*
+bandit-report.*
+safety-report.*
+trivy-report.*
+pylint-report.*
+
+# OS
+.DS_Store
+Thumbs.db
