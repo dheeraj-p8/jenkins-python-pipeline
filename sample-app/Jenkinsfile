@@ -218,8 +218,8 @@ pipeline {
                         sh '''
                             . ${VENV_DIR}/bin/activate
                             pip install safety
-                            safety check --json --output safety-report.json || true
-                            safety check --output safety-report.txt || true
+                            safety check --json > safety-report.json || true
+                            safety check --output text > safety-report.txt || true
                             cat safety-report.txt
                         '''
                         
@@ -242,7 +242,7 @@ pipeline {
                             . ${VENV_DIR}/bin/activate
                             bandit -r sample-app/app/ \
                                 -f json -o bandit-report.json || true
-                            bandit -r app/ \
+                            bandit -r sample-app/app/ \
                                 -f txt -o bandit-report.txt || true
                             cat bandit-report.txt
                         '''
@@ -275,8 +275,8 @@ pipeline {
                             sonar-scanner \
                                 -Dsonar.projectKey=${PROJECT_NAME} \
                                 -Dsonar.projectName="${PROJECT_NAME}" \
-                                -Dsonar.sources=app \
-                                -Dsonar.tests=tests \
+                                -Dsonar.sources=sample-app/app \
+                                -Dsonar.tests=sample-app/tests \
                                 -Dsonar.python.coverage.reportPaths=coverage.xml \
                                 -Dsonar.python.xunit.reportPath=test-results.xml \
                                 -Dsonar.python.version=3.9
