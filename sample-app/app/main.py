@@ -10,7 +10,6 @@ import os
 app = Flask(__name__)
 
 # Intentional security issue: Hardcoded secret key
-app.config['SECRET_KEY'] = 'hardcoded-secret-key-12345'
 
 @app.route('/')
 def home():
@@ -41,25 +40,13 @@ def unnecessary_complexity(input_string):
     SonarQube should flag this
     """
     if input_string is not None:
-        if len(input_string) > 0:
-            if input_string != "":
-                if not input_string.isspace():
-                    return input_string
+        if len(input_string) > 0 and input_string != "" and not input_string.isspace():
+            return input_string
     return ""
 
 # Intentional code smell: Duplicate code
 def process_data_one(data):
     """Process data method 1"""
-    result = []
-    for item in data:
-        if item > 0:
-            result.append(item * 2)
-        else:
-            result.append(0)
-    return result
-
-def process_data_two(data):
-    """Process data method 2 - duplicate of method 1"""
     result = []
     for item in data:
         if item > 0:
@@ -126,39 +113,44 @@ def deserialize():
     return jsonify({'message': 'No data provided'})
 
 # Dead code - unused function
-def unused_function():
-    """This function is never called"""
-    print("This is dead code")
-    return None
 
-# Long and complex function (cognitive complexity issue)
+# Simplified calculation function with better structure
 def complex_calculation(value, operation):
     """
-    Complex calculation with high cognitive complexity
-    This should be flagged by code quality tools
+    Performs calculations based on the operation type and input value.
+    
+    Args:
+        value (int): The input value for calculation
+        operation (str): Type of operation ('add' or 'multiply')
+    
+    Returns:
+        float: The calculated result
     """
-    result = 0
+    if value <= 0:
+        return 0
+        
     if operation == 'add':
-        if value > 0:
-            for i in range(value):
-                if i % 2 == 0:
-                    if i % 3 == 0:
-                        result += i * 2
-                    else:
-                        result += i
-                else:
-                    if i % 5 == 0:
-                        result -= i
-                    else:
-                        result += i / 2
+        return calculate_sum(value)
     elif operation == 'multiply':
-        if value > 0:
-            for i in range(value):
-                if i % 2 == 0:
-                    result *= 2
-                else:
-                    result *= 1
+        return calculate_product(value)
+    return 0
+
+def calculate_sum(value):
+    """Helper function for addition operation"""
+    result = 0
+    for i in range(value):
+        if i % 2 == 0:
+            result += i * 2 if i % 3 == 0 else i
+        else:
+            result += -i if i % 5 == 0 else i / 2
+    return result
+
+def calculate_product(value):
+    """Helper function for multiplication operation"""
+    result = 1  # Changed from 0 to 1 for multiplication
+    for i in range(value):
+        result *= 2 if i % 2 == 0 else 1
     return result
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080)
