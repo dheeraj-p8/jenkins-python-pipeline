@@ -518,7 +518,7 @@ pipeline {
             script {
                 echo "✓ Pipeline completed successfully!"
                 
-                echo "
+                echo """
                     subject: "✓ SUCCESS: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
                     body: 
                         <h2>Build Successful</h2>
@@ -536,7 +536,7 @@ pipeline {
                             <li>DAST Report (OWASP ZAP)</li>
                         </ul>
                         <p><a href="${BUILD_URL}">View Build Details</a></p>
-                    "
+                    """
                     //to: "${EMAIL_RECIPIENTS}",
                     //mimeType: 'text/html'
                 )
@@ -547,7 +547,7 @@ pipeline {
             script {
                 echo "✗ Pipeline failed!"
                 
-                echo "
+                echo """
                     subject: "✗ FAILURE: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
                     body: 
                         <h2>Build Failed</h2>
@@ -557,7 +557,7 @@ pipeline {
                         <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
                         <p><strong>Failed Stage:</strong> Check console output for details</p>
                         <p><a href="${BUILD_URL}console">View Console Output</a></p>
-                    "
+                    """
                     //to: "${EMAIL_RECIPIENTS}",
                     //mimeType: 'text/html'
                 )
@@ -568,7 +568,7 @@ pipeline {
             script {
                 echo "⚠ Pipeline completed with warnings"
                 
-                echo 
+                echo """
                     subject: "⚠ UNSTABLE: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
                     body: """
                         <h2>Build Unstable</h2>
@@ -584,7 +584,7 @@ pipeline {
                             <li>DAST Report (Runtime)</li>
                         </ul>
                         <p><a href="${BUILD_URL}">View Build Details</a></p>
-                    "
+                    """
                     //to: "${EMAIL_RECIPIENTS}",
                     //mimeType: 'text/html'
                 )
