@@ -570,7 +570,7 @@ pipeline {
                 
                 echo """
                     subject: "⚠ UNSTABLE: ${PROJECT_NAME} - Build #${BUILD_NUMBER}",
-                    body: """
+                    body: 
                         <h2>Build Unstable</h2>
                         <p><strong>Project:</strong> ${PROJECT_NAME}</p>
                         <p><strong>Build Number:</strong> ${BUILD_NUMBER}</p>
