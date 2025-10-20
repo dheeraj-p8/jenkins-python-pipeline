@@ -18,4 +18,4 @@ def sanitize_input(user_input):
     Basic input sanitization
     This is incomplete - intentional for testing
     """
-    return user_input.replace('', '').replace('a', '')
+    return user_input.replace('', '').replace('', '')

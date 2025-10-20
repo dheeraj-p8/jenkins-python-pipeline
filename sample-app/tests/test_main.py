@@ -55,4 +55,4 @@ def test_validate_input():
 def test_sanitize_input():
     """Test input sanitization"""
     result = sanitize_input('alert("xss")')
-    assert '' not in result
+    assert 'alert' not in result
