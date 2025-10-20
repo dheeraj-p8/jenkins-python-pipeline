@@ -179,7 +179,7 @@ pipeline {
                     try {
                         sh '''
                             . ${VENV_DIR}/bin/activate
-                            pytest tests/ -v \
+                            pytest sample-app/tests/ -v \
                                 --cov=app \
                                 --cov-report=xml:coverage.xml \
                                 --cov-report=html:htmlcov \
