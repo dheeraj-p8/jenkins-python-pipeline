@@ -128,7 +128,6 @@ pipeline {
                         . ${VENV_DIR}/bin/activate
                         pip install -r sample-app/requirements.txt
                         pip list > installed-packages.txt
-                        sudo apt install -y unzip
                         echo "✓ Dependencies installed"
                     '''
                     archiveArtifacts artifacts: 'installed-packages.txt', allowEmptyArchive: true
