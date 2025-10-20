@@ -18,4 +18,8 @@ def sanitize_input(user_input):
     Basic input sanitization
     This is incomplete - intentional for testing
     """
-    return user_input.replace('', '').replace('', '')
+    dangerous_keywords = ['alert', '<script>', '</script>']
+    sanitized = user_input
+    for word in dangerous_keywords:
+        sanitized = sanitized.replace(word, '')
+    return sanitized
