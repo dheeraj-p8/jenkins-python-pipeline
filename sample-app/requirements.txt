@@ -17,5 +17,8 @@ pylint==3.0.3
 bandit==1.7.5
 pbr==5.11.1
 
+#files for SAST and DAST 
+#unzip
+
 # Production
 gunicorn==21.2.0
