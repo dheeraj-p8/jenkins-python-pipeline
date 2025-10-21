@@ -8,7 +8,7 @@ pipeline {
         // Docker configuration
         DOCKER_IMAGE = "dheepala1/${PROJECT_NAME}"
         DOCKER_TAG = "${BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKER_CREDENTIALS_ID = credentials('dockerhub-credentials')
         
         // SonarQube configuration
         SONARQUBE_ENV = 'SonarQube'
@@ -390,7 +390,7 @@ pipeline {
             steps {
                 script {
                     echo "Pushing Docker image to registry..."
-                    docker.withRegistry('https://hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push("${DOCKER_TAG}")
                         dockerImage.push("latest")
                     }
