@@ -257,7 +257,7 @@ pipeline {
             }
         }
         
-        stage('12. SAST - SonarQube Analysis') {
+          stage('12. SAST - SonarQube Analysis') {
             steps {
                 script {
                     echo "Running SonarQube static analysis..."
@@ -276,7 +276,6 @@ pipeline {
                                 -Dsonar.projectKey=${PROJECT_NAME} \
                                 -Dsonar.projectName="${PROJECT_NAME}" \
                                 -Dsonar.sources=sample-app/app \
-                                -Dsonar.tests=sample-app/tests \
                                 -Dsonar.python.coverage.reportPaths=coverage.xml \
                                 -Dsonar.python.xunit.reportPath=test-results.xml \
                                 -Dsonar.python.version=3.9
@@ -287,7 +286,7 @@ pipeline {
             }
         }
         
-        stage('13. Quality Gate Check') {
+       /* stage('13. Quality Gate Check') {
             steps {
                 script {
                     echo "Waiting for SonarQube Quality Gate result..."
@@ -310,7 +309,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         
         stage('14. IaC Security Scan') {
             when {

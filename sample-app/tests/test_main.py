@@ -86,9 +86,16 @@ def test_hello_xss_attempt(client):
     """Test hello endpoint with XSS attempt"""
     response = client.get('/hello?name=<script>alert("xss")</script>')
     assert response.status_code == 200
-    # Should escape the script tags
-    assert b'' not in response.data
-    assert b'<script>' in response.data
+
+    # raw script tags must NOT appear in the response
+    assert b'<script>' not in response.data
+    assert b'</script>' not in response.data
+
+    # escaped form should appear instead (HTML entities)
+    assert b'&lt;script&gt;' in response.data or b'&amp;lt;script&amp;gt;' in response.data
+
+    # optionally check the contained text was escaped (quotes)
+    assert b'&quot;xss&quot;' in response.data or b'&amp;quot;xss&amp;quot;' in response.data
 
 def test_hello_no_name(client):
     """Test hello endpoint without name"""
@@ -152,9 +159,11 @@ def test_sanitize_input():
     # Convert Markup object to string for comparison
     result_str = str(result)
     
-    # Verify script tags are escaped
-    assert '' not in result_str
-    assert '<script>' in result_str or '<' in result_str
+     # Should not contain unsafe tags
+    assert '<script>' not in result_str
+    assert '<' not in result_str  # No raw angle brackets
+    # Should be escaped instead
+    assert '&lt;' in result_str or '&quot;' in result_str
     
 def test_hash_password():
     """Test password hashing"""
