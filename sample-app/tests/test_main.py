@@ -165,7 +165,7 @@ def test_sanitize_input():
      # Should not contain unsafe tags
     assert '<script>' not in result_str
     assert '<' not in result_str and '>' not in result_str
-    #assert '&lt;' in result_str or '&gt;' in result_str or '&quot;' in result_str
+    # assert '&lt;' in result_str or '&gt;' in result_str or '&quot;' in result_str
     
 def test_hash_password():
     """Test password hashing"""
