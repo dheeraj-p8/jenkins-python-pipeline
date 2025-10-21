@@ -425,7 +425,7 @@ pipeline {
                         
                         sh '''
                             for i in {1..10}; do
-                                if curl -f http://localhost:8080/health; then
+                                if curl -f http://localhost:8081/health; then
                                     echo "Application is healthy"
                                     exit 0
                                 fi
@@ -455,7 +455,7 @@ pipeline {
                                 -v $(pwd):/zap/wrk:rw \
                                 -t ghcr.io/zaproxy/zaproxy:stable \
                                 zap-baseline.py \
-                                -t http://localhost:8080 \
+                                -t http://localhost:8081 \
                                 -r zap-report.html \
                                 -J zap-report.json \
                                 -w zap-report.md \
@@ -490,13 +490,13 @@ pipeline {
                         echo "Testing endpoints..."
                         
                         echo "Test 1: Home endpoint"
-                        curl -f http://localhost:8080/ || exit 1
+                        curl -f http://localhost:8081/ || exit 1
                         
                         echo "Test 2: Health endpoint"
-                        curl -f http://localhost:8080/health || exit 1
+                        curl -f http://localhost:8081/health || exit 1
                         
                         echo "Test 3: Data endpoint"
-                        curl -f http://localhost:8080/api/data || exit 1
+                        curl -f http://localhost:8081/api/data || exit 1
                         
                         echo "✓ All endpoints responding correctly"
                     '''
