@@ -99,7 +99,7 @@ def hello():
     name = request.args.get('name', 'World')
     
     # Escape HTML to prevent XSS
-    safe_name = escape(name)
+    safe_name = str(escape(name))
     
     template = f"Hello {safe_name}!"
     return render_template_string(template)

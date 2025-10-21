@@ -41,8 +41,10 @@ def sanitize_input(user_input):
     if not user_input:
         return ""
     
+    return str(escape(user_input))
+    
     # Escape HTML
-    return escape(user_input)
+    #return escape(user_input)
 
 def validate_email(email):
     """
