@@ -394,7 +394,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh 'echo $USER'
             }
-                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry('https://index.docker.io/v1/', "dockerhub-credentials") {
                         dockerImage.push("${DOCKER_TAG}")
                         dockerImage.push("latest")
                     }
