@@ -420,10 +420,10 @@ pipeline {
                                 --restart unless-stopped \
                                 ${DOCKER_IMAGE}:${DOCKER_TAG}
                         """
-                        echo" 
+                        echo "
                         PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
                         PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-//                      "
+                        "
                         
                         sleep(time: 20, unit: 'SECONDS')
                         
