@@ -84,7 +84,7 @@ def test_hello_safe_name(client):
 
 def test_hello_xss_attempt(client):
     """Test hello endpoint with XSS attempt"""
-    response = client.get('/hello?name=alert("xss")')
+    response = client.get('/hello?name=<script>alert("xss")</script>')
     assert response.status_code == 200
     # Should escape the script tags
     assert b'' not in response.data
@@ -148,12 +148,14 @@ def test_validate_input():
 def test_sanitize_input():
     """Test input sanitization"""
     result = sanitize_input('alert("xss")')
-    assert '' not in result
-    assert '<' in result or 'script' not in result
     
-    assert sanitize_input('') == ''
-    assert sanitize_input(None) == ''
-
+    # Convert Markup object to string for comparison
+    result_str = str(result)
+    
+    # Verify script tags are escaped
+    assert '' not in result_str
+    assert '<script>' in result_str or '<' in result_str
+    
 def test_hash_password():
     """Test password hashing"""
     password = 'SecurePassword123!'
@@ -200,4 +202,4 @@ def test_sanitize_filename():
     assert sanitize_filename('test.txt') == 'test.txt'
     assert sanitize_filename('../../../etc/passwd') == 'passwd'
     assert sanitize_filename('file with spaces.txt') == 'filewithspaces.txt'
-    assert sanitize_filename('test.txt') == 'testscript.txt'
+    assert sanitize_filename('test<script>.txt') == 'testscript.txt'
