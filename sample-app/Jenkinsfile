@@ -390,7 +390,7 @@ pipeline {
             steps {
                 script {
                     echo "Pushing Docker image to registry..."
-                    docker.withRegistry('https://hub.docker.com/repositories', "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry('https://hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push("${DOCKER_TAG}")
                         dockerImage.push("latest")
                     }
