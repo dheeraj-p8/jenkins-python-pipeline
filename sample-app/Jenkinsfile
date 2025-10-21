@@ -159,8 +159,8 @@ pipeline {
                     try {
                         sh '''
                             . ${VENV_DIR}/bin/activate
-                            pylint app/ --output-format=json > pylint-report.json || true
-                            pylint app/ --output-format=text || true
+                            pylint simple-app/app/ --output-format=json > pylint-report.json || true
+                            pylint simple-app/app/ --output-format=text || true
                         '''
                         archiveArtifacts artifacts: 'pylint-report.json', allowEmptyArchive: true
                         echo "✓ Linting completed"
@@ -320,7 +320,7 @@ pipeline {
                     echo "Running Checkov IaC security scan..."
                     try {
                         sh '''
-                            checkov -d terraform \
+                            checkov -d sample-app/terraform \
                                 --output cli \
                                 --output json \
                                 --output-file-path . \
@@ -390,7 +390,7 @@ pipeline {
             steps {
                 script {
                     echo "Pushing Docker image to registry..."
-                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry('https://hub.docker.com/repositories', "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push("${DOCKER_TAG}")
                         dockerImage.push("latest")
                     }
