@@ -451,6 +451,7 @@ pipeline {
                     try {
                         sh '''
                             docker run --rm \
+                                --user root \
                                 --network host \
                                 -v $(pwd):/zap/wrk:rw \
                                 -t ghcr.io/zaproxy/zaproxy:stable \
