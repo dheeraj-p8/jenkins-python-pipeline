@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sample-python-app
+  labels:
+    name: sample-python-app
+    environment: production
