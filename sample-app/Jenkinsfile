@@ -443,6 +443,42 @@ pipeline {
                 }
             }
         }*/
+
+
+        stage('18. Deploy to Kubernetes (K3s)') {
+            steps {
+                script {
+                    echo "Deploying to Kubernetes cluster..."
+            
+                    withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        # Set kubeconfig
+                        export KUBECONFIG=$KUBECONFIG
+                    
+                        # Update deployment with new image
+                        kubectl set image deployment/sample-python-app \
+                        sample-python-app=dheerpala1/sample-python-app:${BUILD_NUMBER} \
+                        -n sample-python-app
+                    
+                        # Wait for rollout to complete
+                        kubectl rollout status deployment/sample-python-app \
+                        -n sample-python-app \
+                        --timeout=5m
+                    
+                        # Verify deployment
+                        kubectl get pods -n sample-python-app
+                    
+                        # Get service URL
+                        NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+                        NODE_PORT=$(kubectl get svc sample-python-app-service -n sample-python-app -o jsonpath='{.spec.ports[0].nodePort}')
+                    
+                        echo "✓ Application deployed successfully"
+                        echo "Access at: http://${NODE_IP}:${NODE_PORT}"
+                    '''
+                    }
+                }   
+            }
+        }
         
         stage('19. DAST - Dynamic Application Security Test') {
             steps {
@@ -501,45 +537,12 @@ pipeline {
                         
                         echo "✓ All endpoints responding correctly"
                     '''
-                
-            }
-        }
-    }
-
-    stage('18. Deploy to Kubernetes (K3s)') {
-    steps {
-        script {
-            echo "Deploying to Kubernetes cluster..."
-            
-            withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG')]) {
-                sh '''
-                    # Set kubeconfig
-                    export KUBECONFIG=$KUBECONFIG
-                    
-                    # Update deployment with new image
-                    kubectl set image deployment/sample-python-app \
-                        sample-python-app=dheerpala1/sample-python-app:${BUILD_NUMBER} \
-                        -n sample-python-app
-                    
-                    # Wait for rollout to complete
-                    kubectl rollout status deployment/sample-python-app \
-                        -n sample-python-app \
-                        --timeout=5m
-                    
-                    # Verify deployment
-                    kubectl get pods -n sample-python-app
-                    
-                    # Get service URL
-                    NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
-                    NODE_PORT=$(kubectl get svc sample-python-app-service -n sample-python-app -o jsonpath='{.spec.ports[0].nodePort}')
-                    
-                    echo "✓ Application deployed successfully"
-                    echo "Access at: http://${NODE_IP}:${NODE_PORT}"
-                '''
                 }
             }
         }
     }
+
+    
 
     
     post {
