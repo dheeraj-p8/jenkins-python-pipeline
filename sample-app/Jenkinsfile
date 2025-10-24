@@ -536,10 +536,11 @@ pipeline {
                     echo "✓ Application deployed successfully"
                     echo "Access at: http://${NODE_IP}:${NODE_PORT}"
                 '''
+                }
             }
         }
     }
-}
+
     
     post {
         always {
