@@ -442,7 +442,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
         
         stage('19. DAST - Dynamic Application Security Test') {
             steps {
@@ -501,10 +501,10 @@ pipeline {
                         
                         echo "✓ All endpoints responding correctly"
                     '''
-                }
+                
             }
         }
-    }*/
+    }
 
     stage('18. Deploy to Kubernetes (K3s)') {
     steps {
